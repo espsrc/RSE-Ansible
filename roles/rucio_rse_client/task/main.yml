@@ -1,0 +1,130 @@
+---
+- name: Install Packages
+  ansible.builtin.yum:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - acl
+    - attr
+    - openssl
+    state: present
+
+- name: Install NTP
+  ansible.builtin.package:
+    name: ntp
+    state: present
+
+- name: Enable ntpd
+  ansible.builtin.systemd:
+    name: ntpd
+    state: start
+    enabled: yes
+  when: ansible_os_family == 'RedHat'
+  ignore_errors: True
+
+- name: Create a folder on remote host
+  ansible.builtin.file:
+    path: /etc/grid-security/
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: Create simple self-signed certificate
+  community.crypto.x509_certificate:
+    path: /etc/grid-security/certificate.pem
+    privatekey_path: /etc/grid-security/certificate.key
+    provider: selfsigned
+
+- name: Change permissions
+    file:
+       path: /etc/grid-security/certificate.pem
+       owner: root
+       group: root
+       mode: '0644'
+    file:
+       path: /etc/grid-security/certificate.key
+       owner: root
+       group: root
+       mode: '0400'
+
+- name: Create a folder on remote host for temporal files
+  ansible.builtin.file:
+    path: /tmp
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: Import a key from a url
+  ansible.builtin.rpm_key:
+    state: present
+    key: http://repository.egi.eu/sw/production/umd/UMD-RPM-PGP-KEY
+
+- name: Copy rpm files to server
+  copy:
+     src: https://dl.fedoraproject.org/pub/epel/7/x86_64/Packages/e/epel-release-7-12.noarch.rpm
+     dest: /tmp/epel-release-7-12.noarch.rpm
+     src: http://repository.egi.eu/sw/production/umd/4/centos7/x86_64/updates/umd-release-4.1.3-1.el7.centos.noarch.rpm
+     dest: /tmp/umd-release-4.1.3-1.el7.centos.noarch.rpm
+
+- name: Install packages.
+  yum:
+     name: /tmp/epel-release-7-12.noarch.rpm
+     name: /tmp/umd-release-4.1.3-1.el7.centos.noarch.rpm
+     state: present
+
+- name: Download EGI-trustanchors
+  ansible.builtin.get_url:
+    url: http://repository.egi.eu/sw/production/cas/1/current/repo-files/EGI-trustanchors.repo
+    dest: /etc/yum.repos.d/EGI-trustanchors.repo
+    mode: '0440'
+
+- name: Install ca-policy-egi-core and yum utils
+  ansible.builtin.yum:
+    name:
+      - ca-policy-egi-core
+      - yum-utils
+    state: present
+
+- name: Add repository
+  ansible.builtin.yum_repository:
+    name: epel
+    description: EPEL YUM repo
+    baseurl: https://repo.cloud.cnaf.infn.it/repository/storm/storm-stable-centos7.repo
+
+- name: Install epel-release
+  ansible.builtin.yum:
+    name:
+      - epel-release
+    state: present
+
+- name: Install package puppet
+  community.general.apt_rpm:
+    pkg: https://yum.puppetlabs.com/puppet5/el/7/x86_64/puppet5-release-5.0.0-6.el7.noarch.rpm
+    state: present
+
+- name: Install puppet
+  ansible.builtin.yum:
+    name:
+      - puppet
+    state: present
+
+
+- name: Transfer and execute puppet.modules.sh
+  sudo: yes
+  tasks:
+     - name: Transfer the script
+       copy: src=puppet.modules.sh dest=/tmp mode=0777
+
+     - name: Execute the script
+       command: sh /tmp/puppet.modules.sh
+
+- name: Transfer setup.pp
+  sudo: yes
+  tasks:
+     - name: Transfer the script
+       copy: src=setup.pp dest=/tmp mode=0777
+
+     - name: Execute the script
+       command: puppet apply /tmp/setup.pp

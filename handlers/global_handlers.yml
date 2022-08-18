@@ -1,0 +1,10 @@
+---
+
+- name: Reboot systems
+  reboot:
+
+- name: Restart apache
+  ansible.builtin.service:
+    name: "{{ apache_service }}"
+    state: started
+    enabled: yes
