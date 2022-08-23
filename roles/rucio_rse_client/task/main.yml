@@ -1,4 +1,6 @@
 ---
+
+
 - name: Install Packages
   ansible.builtin.yum:
     name: "{{ packages }}"
@@ -7,8 +9,12 @@
     - acl
     - attr
     - openssl
-    - epel-release
-    - python-pip
+    - wget  
+    - gcc
+    - libffi-devel
+    - python-devel
+    - dnf
+    - python2-cryptography.x86_64
     state: present
 
 - name: Install NTP
@@ -24,11 +30,18 @@
     #when: ansible_os_family == 'RedHat'
     #ignore_errors: True
 
-- name: Upgrade RHEL Family OS packages
-  yum:
-    name: '*'
+    #- name: Install openssl and python-pip
+    #  ansible.builtin.package:
+    #    name: 
+    #     - openssl
+    #     - python-pip
+    #    state: present
+
+- name: Install python-crypto with dnf
+  ansible.builtin.dnf:
+    name: 
+      - python-crypto  
     state: latest
-  when: ansible_os_family == "RedHat"
 
 - name: Create a folder on remote host
   ansible.builtin.file:
@@ -38,34 +51,42 @@
     group: root
     mode: '0700'
 
-- name: Install Python libraries cryptography
-  ansible.builtin.package:
-    name: "{{ packages1 }}"
-  vars:
-    packages1:
-    - gcc
-    - libffi-devel
-    - python-devel
-    - pyOpenSSL
-    state: present
-
-- name: Upgrade pip
-  yum:
-    name: 'python-pip'
-    state: latest
-  when: ansible_os_family == "RedHat"
+        #- name: Create Certificates
+        #  become: yes
+        #  command: openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -keyout key.pem -out cert.pem
+        #  register: out 
+        #- debug: var=out.stdout_lines
 
 
-  #- name: Install python package
-  #  ansible.builtin.pip:
-  #    name: cryptography
-  #    executable: pip 
+    #- name: Upgrade RHEL Family OS packages
+    #  yum:
+    #    name: '*'
+    #    state: latest
+    #  when: ansible_os_family == "RedHat"
 
-    #- name: Create simple self-signed certificate
-    #  community.crypto.x509_certificate:
-    #    path: /etc/grid-security/certificate.pem
-    #    privatekey_path: /etc/grid-security/certificate.key
-    #    provider: selfsigned
+  # Certificados x509
+
+- name: Ensure private key is present
+  community.crypto.openssl_privatekey:
+    path: /etc/grid-security/hostkey.pem
+    size: 2048
+    mode: 0400
+    type: RSA
+
+- name: Ensure self-signed cert is present
+  community.crypto.x509_certificate:
+    path: /etc/grid-security/hostcert.crt
+    privatekey_path: /etc/grid-security/hostkey.pem
+    provider: selfsigned
+    selfsigned_not_after: "+3650d" # this is the default
+    #mode: 0600
+
+- name: Create simple self-signed certificate
+  community.crypto.x509_certificate:
+    path: /etc/grid-security/hostcert.pem
+    privatekey_path: /etc/grid-security/hostkey.pem
+    provider: selfsigned
+    mode: 0644
 
     #- name: Change permissions
     #  ansible.builtin.file:
@@ -90,83 +111,153 @@
     mode: '0700'
 
 - name: Import a key from a url
+  become: yes
   ansible.builtin.rpm_key:
     state: present
     key: http://repository.egi.eu/sw/production/umd/UMD-RPM-PGP-KEY
 
-- name: Install remote rpm files on server
-  ansible.builtin.yum:
+- name: Install remote rpm files on server (EPEL)
+  become: yes
+  ansible.builtin.yum:   
+          #name: https://dl.fedoraproject.org/pub/epel/7/x86_64/Packages/e/epel-release-7-14.noarch.rpm
     name: https://download-ib01.fedoraproject.org/pub/epel/7/aarch64/Packages/e/epel-release-7-12.noarch.rpm
     state: present
     
-    #- name: Copy rpm files to server
+- name: Install umd-release
+  become: yes
+  ansible.builtin.yum:
+    name: http://repository.egi.eu/sw/production/umd/4/centos7/x86_64/updates/umd-release-4.1.3-1.el7.centos.noarch.rpm
+    state: present
+
+- name: Wget EGI Repo
+  become: yes
+  command: wget http://repository.egi.eu/sw/production/cas/1/current/repo-files/EGI-trustanchors.repo -O /etc/yum.repos.d/EGI-trustanchors.repo
+
+    #- name: install ca-policy-egi-core
+    #  become: yes
+    #  command: yum install ca-policy-egi-core -y
+
+- name: install yum-utils
+  command: yum install yum-utils -y
+
+- name: config-manager
+  become: yes
+  command: wget https://repo.cloud.cnaf.infn.it/repository/storm/storm-stable-centos7.repo -O /etc/yum.repos.d/storm-stable-centos7.repo
+
+- name: install epel-release
+  command: yum -y install epel-release
+
+- name: install rpm puppets
+  command: rpm -Uvh https://yum.puppetlabs.com/puppet5/el/7/x86_64/puppet5-release-5.0.0-6.el7.noarch.rpm
+
+- name: Delete repos
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+      - /etc/yum.repos.d/egi.repo
+      #- hello2.txt
+      #- hello3.txt
+
+
+  #- name: Add repo Cloud Cnaf
+  #  become: yes
+  #  ansible.builtin.yum_repository:
+  #    name: storm
+  #    description: Cloud Cnaf
+  #    baseurl: https://repo.cloud.cnaf.infn.it/repository/storm/storm-stable-centos7.repo
+
+    #- name: Get Cloud Cnaf Repo File
+    #  become: yes
     #  ansible.builtin.copy:
-    #    src: https://dl.fedoraproject.org/pub/epel/7/x86_64/Packages/e/epel-release-7-12.noarch.rpm
-    #    dest: /tmp/epel-release-7-12.noarch.rpm
+    #    src: storm-stable-centos7.repo
+    #    dest: /etc/yum.repos.d/
+    #    mode: 0644
 
-- name: Copy rpm files to server
-  ansible.builtin.copy:
-    src: http://repository.egi.eu/sw/production/umd/4/centos7/x86_64/updates/umd-release-4.1.3-1.el7.centos.noarch.rpm
-    dest: /tmp/umd-release-4.1.3-1.el7.centos.noarch.rpm
+    #
+    #- name: wget Cloud Cnaf Repo
+    #  become: yes
+    #  command: wget https://repo.cloud.cnaf.infn.it/repository/storm/storm-stable-centos7.repo -O /etc/yum.repos.d/storm-stable-centos7.repo
 
-- name: Install packages.
-  yum:
-     name: /tmp/epel-release-7-12.noarch.rpm
-     state: present
+    #- name: Wget EGI Repo
+    #  become: yes
+    #  command: wget http://repository.egi.eu/sw/production/cas/1/current/repo-files/EGI-trustanchors.repo -O /etc/yum.repos.d/EGI-trustanchors.repo
+  #register: out
+  #- debug: var=out.stdout_lines
 
-- name: Install packages.
-  yum:
-     name: /tmp/umd-release-4.1.3-1.el7.centos.noarch.rpm
-     state: present
 
-- name: Download EGI-trustanchors
-  ansible.builtin.get_url:
-    url: http://repository.egi.eu/sw/production/cas/1/current/repo-files/EGI-trustanchors.repo
-    dest: /etc/yum.repos.d/EGI-trustanchors.repo
-    mode: '0440'
+    # Funciona, comentado para para seguir probando
+    #- name: Install ca-policy-egi-core
+    #  become: yes
+    #  ansible.builtin.yum:
+    #    name:
+    #      - ca-policy-egi-core
+    #    state: present
 
-- name: Install ca-policy-egi-core and yum utils
+- name: Install redis
   ansible.builtin.yum:
     name:
-      - ca-policy-egi-core
-      - yum-utils
+      - redis
     state: present
 
-- name: Add repository
-  ansible.builtin.yum_repository:
-    name: epel
-    description: EPEL YUM repo
-    baseurl: https://repo.cloud.cnaf.infn.it/repository/storm/storm-stable-centos7.repo
+    #- name: Install epel-release
+    #  ansible.builtin.yum:
+    #    name:
+    #      - epel-release
+    #    state: present
 
-- name: Install epel-release
+
+    #Creo que no es necesario si funciona lo anterior
+- name: Install puppet-agent
   ansible.builtin.yum:
     name:
-      - epel-release
+      - puppet-agent
     state: present
 
-- name: Install package puppet
-  community.general.apt_rpm:
-    pkg: https://yum.puppetlabs.com/puppet5/el/7/x86_64/puppet5-release-5.0.0-6.el7.noarch.rpm
-    state: present
 
-- name: Install puppet
-  ansible.builtin.yum:
-    name:
-      - puppet
-    state: present
+    #- name: Download puppet5
+    #  become: yes
+    #  ansible.builtin.get_url:
+    #    url: https://yum.puppetlabs.com/puppet5/el/7/x86_64/puppet5-release-5.0.0-6.el7.noarch.rpm
+    #    dest: /tmp/puppet5-release-5.0.0-6.el7.noarch.rpm
+    #    mode: '0777'
+
+    #- name: install puppet from file
+    #  become: yes
+    #  yum:
+    #    name: /tmp/puppet5-release-5.0.0-6.el7.noarch.rpm
+    #    state: present
+
+    #- name: Install package puppet
+    #  become: yes
+    #  ansible.builtin.yum:
+    #    name: https://yum.puppetlabs.com/puppet5/el/7/x86_64/puppet5-release-5.0.0-6.el7.noarch.rpm
+    #    state: present
+
+    #Mejor opcion arriba, pendiente prueba
+    #- name: Install package puppet
+    #  become: yes
+    #  community.general.apt_rpm:
+    #    pkg: https://yum.puppetlabs.com/puppet5/el/7/x86_64/puppet5-release-5.0.0-6.el7.noarch.rpm
+    #    state: present
+
+    #Creo que no es necesario si funciona lo anterior
+    #- name: Install puppet-agent
+    #  become: yes
+    #  ansible.builtin.yum:
+    #    name:
+    #      - puppet-agent
+    #    state: present
+
+- name: reset ssh connection to allow user changes to affect 'current login user'
+  meta: reset_connection    
 
 - name: Transfer puppet.modules.sh
+  become: yes
   ansible.builtin.copy:
     src: puppet.modules.sh
     dest: /tmp 
     mode: 0777
-
-- name: Execute the script
-  ansible.builtin.shell: puppet.modules.sh >> puppet.modules.txt
-  args:
-    chdir: tmp/
-    #creates: puppet.modules.txt
-
 
 - name: Transfer setup.pp
   ansible.builtin.copy:
@@ -174,5 +265,30 @@
     dest: /tmp
     mode: 0777
 
-- name: Execute the script
+- name: Transfer manifest.pp
+  ansible.builtin.copy:
+    src: manifest.pp
+    dest: /tmp
+    mode: 0777
+
+- name: Reboot the machine (Wait for 2 min)
+  reboot:
+    reboot_timeout: 120
+
+- name: Execute the script puppet.modules
+  become: yes
+  command: sh /tmp/puppet.modules.sh  
+
+- name: Execute the script setup.pp
+  become: yes
   command: puppet apply /tmp/setup.pp
+
+- name: Execute the scritp manifest
+  become: yes
+  command: puppet apply /tmp/manifest.pp
+
+- name: Enable redis
+  ansible.builtin.systemd:
+    name: redis
+    state: started
+    enabled: yes
