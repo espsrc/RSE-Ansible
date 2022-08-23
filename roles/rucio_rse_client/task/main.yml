@@ -30,6 +30,7 @@
     #when: ansible_os_family == 'RedHat'
     #ignore_errors: True
 
+    #Funciona, comentado para segur
     #- name: Install openssl and python-pip
     #  ansible.builtin.package:
     #    name: 
@@ -50,13 +51,6 @@
     owner: root
     group: root
     mode: '0700'
-
-        #- name: Create Certificates
-        #  become: yes
-        #  command: openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -keyout key.pem -out cert.pem
-        #  register: out 
-        #- debug: var=out.stdout_lines
-
 
     #- name: Upgrade RHEL Family OS packages
     #  yum:
@@ -87,20 +81,6 @@
     privatekey_path: /etc/grid-security/hostkey.pem
     provider: selfsigned
     mode: 0644
-
-    #- name: Change permissions
-    #  ansible.builtin.file:
-    #    path: /etc/grid-security/certificate.pem
-    #    owner: root
-    #    group: root
-    #    mode: '0644'
-
-    #- name: Change permissions
-    #  ansible.builtin.file:
-    #    path: /etc/grid-security/certificate.key
-    #    owner: root
-    #    group: root
-    #    mode: '0400'
 
 - name: Create a folder on remote host for temporal files
   ansible.builtin.file:
@@ -149,15 +129,6 @@
 
 - name: install rpm puppets
   command: rpm -Uvh https://yum.puppetlabs.com/puppet5/el/7/x86_64/puppet5-release-5.0.0-6.el7.noarch.rpm
-
-- name: Delete repos
-  file:
-    path: "{{ item }}"
-    state: absent
-  with_items:
-      - /etc/yum.repos.d/egi.repo
-      #- hello2.txt
-      #- hello3.txt
 
 
   #- name: Add repo Cloud Cnaf
@@ -215,18 +186,18 @@
     state: present
 
 
-    #- name: Download puppet5
-    #  become: yes
-    #  ansible.builtin.get_url:
-    #    url: https://yum.puppetlabs.com/puppet5/el/7/x86_64/puppet5-release-5.0.0-6.el7.noarch.rpm
-    #    dest: /tmp/puppet5-release-5.0.0-6.el7.noarch.rpm
-    #    mode: '0777'
+- name: Download puppet5
+  become: yes
+  ansible.builtin.get_url:
+    url: https://yum.puppetlabs.com/puppet5/el/7/x86_64/puppet5-release-5.0.0-6.el7.noarch.rpm
+    dest: /tmp/puppet5-release-5.0.0-6.el7.noarch.rpm
+    mode: '0777'
 
-    #- name: install puppet from file
-    #  become: yes
-    #  yum:
-    #    name: /tmp/puppet5-release-5.0.0-6.el7.noarch.rpm
-    #    state: present
+- name: install puppet from file
+  become: yes
+  yum:
+    name: /tmp/puppet5-release-5.0.0-6.el7.noarch.rpm
+    state: present
 
     #- name: Install package puppet
     #  become: yes
@@ -241,13 +212,6 @@
     #    pkg: https://yum.puppetlabs.com/puppet5/el/7/x86_64/puppet5-release-5.0.0-6.el7.noarch.rpm
     #    state: present
 
-    #Creo que no es necesario si funciona lo anterior
-    #- name: Install puppet-agent
-    #  become: yes
-    #  ansible.builtin.yum:
-    #    name:
-    #      - puppet-agent
-    #    state: present
 
 - name: reset ssh connection to allow user changes to affect 'current login user'
   meta: reset_connection    
