@@ -154,6 +154,10 @@
     name: epel-release
     state: present
 
+- name: Test install latest version puppet
+  become: yes
+  command: rpm -ivh http://yum.puppetlabs.com/puppetlabs-release-el-7.noarch.rpm
+
 - name: Install puppet
   become: yes
   ansible.builtin.yum:
