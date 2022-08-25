@@ -223,6 +223,26 @@
   reboot:
     reboot_timeout: 120
 
+- name: Install redis
+  ansible.builtin.yum:
+    name:
+      - redis
+    state: present
+
+- name: Enable redis
+  ansible.builtin.systemd:
+    name: redis
+    state: started
+    enabled: yes
+
+- name: Create a folder on remote /storage/dteam/
+  ansible.builtin.file:
+    path: /storage/dteam
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
 - name: Execute the script puppet.modules
   become: yes
   command: sh /tmp/puppet.modules.sh  
