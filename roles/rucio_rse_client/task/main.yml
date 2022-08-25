@@ -154,15 +154,22 @@
     name: epel-release
     state: present
 
-- name: Test install latest version puppet
-  become: yes
-  command: rpm -ivh http://yum.puppetlabs.com/puppetlabs-release-el-7.noarch.rpm
+    #- name: Test install latest version puppet from rpm
+    #  become: yes
+    #  command: rpm -ivh http://yum.puppetlabs.com/puppetlabs-release-el-7.noarch.rpm
 
 - name: Install puppet
   become: yes
   ansible.builtin.yum:
     name: https://yum.puppetlabs.com/puppet5/el/7/x86_64/puppet5-release-5.0.0-6.el7.noarch.rpm
     state: present
+
+- name: Install Puppet
+  become: yes
+  ansible.builtin.package:
+    name: puppet
+    state: present
+
 
   #- name: Add repo Cloud Cnaf
   #  become: yes
