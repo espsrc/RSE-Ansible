@@ -15,6 +15,7 @@
     - python-devel
     - dnf
     - python2-cryptography.x86_64
+    - yum-utils
     state: present
 
 - name: Install NTP
@@ -109,23 +110,53 @@
     name: http://repository.egi.eu/sw/production/umd/4/centos7/x86_64/updates/umd-release-4.1.3-1.el7.centos.noarch.rpm
     state: present
 
-- name: Wget EGI Repo
-  become: yes
-  command: wget http://repository.egi.eu/sw/production/cas/1/current/repo-files/EGI-trustanchors.repo -O /etc/yum.repos.d/EGI-trustanchors.repo
-
-    #- name: install ca-policy-egi-core
+    #- name: Wget EGI Repo
     #  become: yes
-    #  command: yum install ca-policy-egi-core -y
+    #  command: wget http://repository.egi.eu/sw/production/cas/1/current/repo-files/EGI-trustanchors.repo -O /etc/yum.repos.d/EGI-trustanchors.repo
+
+- name: Add repository EGI (Before Sep/2022)
+  become: yes
+  ansible.builtin.yum_repository:
+    name: EGI-trustanchors
+    description: EGI-trustanchors repo
+    baseurl: http://repository.egi.eu/sw/production/cas/1/current/
+    state: present
+
+- name: Import a key from EGI
+  become: yes
+  ansible.builtin.rpm_key:
+    state: present
+    key: http://repository.egi.eu/sw/production/cas/1/GPG-KEY-EUGridPMA-RPM-3
+    
+- name: yum-clean-metadata
+  ansible.builtin.command: yum clean metadata
+  args:
+    warn: no
+
+- name: Update lcg-CA
+  become: yes
+  command: yum update lcg-CA
+
+
+- name: Install ca-policy-egi-core
+  become: yes
+  ansible.builtin.yum:
+    name: ca-policy-egi-core
+    state: present
 
 - name: install yum-utils
   command: yum install yum-utils -y
 
-- name: config-manager
-  become: yes
-  command: wget https://repo.cloud.cnaf.infn.it/repository/storm/storm-stable-centos7.repo -O /etc/yum.repos.d/storm-stable-centos7.repo
+  # Error en el repo, no puede traerlo, se copia fichero
+  #- name: config-manager
+  #  become: yes
+  #command: wget https://repo.cloud.cnaf.infn.it/repository/storm/storm-stable-centos7.repo -O /etc/yum.repos.d/storm-stable-centos7.repo
+  #command: yum-config-manager --add-repo https://repo.cloud.cnaf.infn.it/repository/storm/storm-stable-centos7.repo
 
-- name: install epel-release
-  command: yum -y install epel-release
+- name: Install epel-release
+  ansible.builtin.package:
+    name: epel-release
+    state: present
 
 - name: install rpm puppets
   command: rpm -Uvh https://yum.puppetlabs.com/puppet5/el/7/x86_64/puppet5-release-5.0.0-6.el7.noarch.rpm
@@ -165,11 +196,6 @@
     #      - ca-policy-egi-core
     #    state: present
 
-- name: Install redis
-  ansible.builtin.yum:
-    name:
-      - redis
-    state: present
 
     #- name: Install epel-release
     #  ansible.builtin.yum:
@@ -250,6 +276,12 @@
 - name: Execute the scritp manifest
   become: yes
   command: puppet apply /tmp/manifest.pp
+
+- name: Install redis
+  ansible.builtin.yum:
+    name:
+      - redis
+    state: present
 
 - name: Enable redis
   ansible.builtin.systemd:
