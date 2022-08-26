@@ -1,9 +1,5 @@
-[ubuntu1804]
-
-[ubuntu2004]
-<IP> ansible_ssh_port=18018
-
 [centos7]
+<IP> ansible_ssh_port=<port>
 
 [centos8]
 
@@ -12,26 +8,14 @@
 centos7
 centos8
 
-[ubuntu:children]
-ubuntu1804
-ubuntu2004
-
 [all:children]
 centos
-ubuntu
 
 [centos:vars]
 #virtualenv_command=virtualenv-3
 ansible_user=centos
 apache_packages=httpd,mod_ssl
 apache_service=httpd
-
-[ubuntu:vars]
-ansible_python_interpreter=/usr/bin/python3
-#virtualenv_command=virtualenv
-ansible_user=ubuntu
-apache_packages=apache2
-apache_service=apache2
 
 [all:vars]
 #ansible_ssh_common_args='-o StrictHostKeyChecking=No'

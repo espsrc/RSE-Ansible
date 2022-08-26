@@ -132,13 +132,13 @@
     name: epel-release
     state: present
 
-- name: Install puppet
+- name: Install puppet 1/2
   become: yes
   ansible.builtin.yum:
     name: https://yum.puppetlabs.com/puppet5/el/7/x86_64/puppet5-release-5.0.0-6.el7.noarch.rpm
     state: present
 
-- name: Install Puppet
+- name: Install Puppet 2/2
   become: yes
   ansible.builtin.package:
     name: puppet
@@ -198,6 +198,32 @@
   become: yes
   command: puppet apply /tmp/setup.pp
 
-  #- name: Execute the scritp manifest
+  #- name: Execute the scritp manifest. Need configuration in the file
   #  become: yes
   #  command: puppet apply /tmp/manifest.pp
+
+- name: Create a folder on remote /storage/dteam/
+  ansible.builtin.file:
+    path: /etc/storm/webdav
+    state: directory
+    owner: root
+    group: storm
+    mode: '0700'
+
+name: Transfer storm-webdav-test-sa.properties
+  ansible.builtin.copy:
+    src: storm-webdav-test-sa.properties
+    dest: /etc/storm/webdav/sa.d/
+    mode: 0644
+    
+name: Transfer application.yml 
+  ansible.builtin.copy:
+    src: application.yml 
+    dest: /etc/storm/webdav/config/
+    mode: 0640
+
+- name: Copy certificates to storm.
+  copy:
+  src: /etc/grid-security/
+  dest: /etc/grid-security/storm-webdav/
+  delegate_to: localhost
