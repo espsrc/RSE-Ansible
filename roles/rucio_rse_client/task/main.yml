@@ -106,6 +106,15 @@
     state: present
     key: http://repository.egi.eu/sw/production/cas/1/GPG-KEY-EUGridPMA-RPM-3
 
+    # Not found!
+    #- name: Add repository Storm
+    #  become: yes
+    #  ansible.builtin.yum_repository:
+    #    name: Storm-repo
+    #    description: Storm repo
+    #    baseurl: https://repo.cloud.cnaf.infn.it/repository/storm-rpm-stable/centos7/
+    #    state: present
+
 - name: yum-clean-metadata
   ansible.builtin.command: yum clean metadata
   args:
@@ -133,9 +142,10 @@
     state: present
 
 - name: Install puppet 1/2
-  become: yes
+  #become: yes
   ansible.builtin.yum:
-    name: https://yum.puppetlabs.com/puppet5/el/7/x86_64/puppet5-release-5.0.0-6.el7.noarch.rpm
+          #name: https://yum.puppetlabs.com/puppet5/el/7/x86_64/puppet5-release-5.0.0-6.el7.noarch.rpm
+    name: http://linuxsoft.cern.ch/mirror/yum.puppetlabs.com/puppet5/el/7/x86_64/puppet5-release-5.0.0-9.el7.noarch.rpm
     state: present
 
 - name: Install Puppet 2/2
@@ -166,9 +176,9 @@
     dest: /tmp
     mode: 0777
 
-- name: Reboot the machine (Wait for 2 min)
+- name: Reboot the machine (Wait for 1 min)
   reboot:
-    reboot_timeout: 120
+    reboot_timeout: 60
 
 - name: Install redis
   ansible.builtin.yum:
@@ -189,20 +199,22 @@
     owner: root
     group: root
     mode: '0700'
-- name: Export path
-  become: yes
-  command: export PATH=${PATH}:/opt/puppet/bin
+
+    #- name: Export path
+    #  become: yes
+    #  command: export PATH=${PATH}:/opt/puppet/bin
 
 - name: Execute the script puppet.modules
-  become: yes
+  #become: yes
   command: sh /tmp/puppet.modules.sh
+  #ansible.builtin.command: sh /tmp/puppet.modules.sh
 
 - name: Execute the script setup.pp
-  become: yes
+  #become: yes
   command: puppet apply /tmp/setup.pp
 
-- name: Execute the scritp manifest. Need configuration in the file
-  become: yes
+- name: Execute the script manifest. Need configuration in the file
+  #become: yes
   command: puppet apply /tmp/manifest.pp
 
 - name: Create a folder on remote /storm/webdav
