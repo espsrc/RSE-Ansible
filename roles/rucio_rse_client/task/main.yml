@@ -189,6 +189,9 @@
     owner: root
     group: root
     mode: '0700'
+- name: Export path
+  become: yes
+  command: export PATH=${PATH}:/opt/puppet/bin
 
 - name: Execute the script puppet.modules
   become: yes
