@@ -198,11 +198,11 @@
   become: yes
   command: puppet apply /tmp/setup.pp
 
-  #- name: Execute the scritp manifest. Need configuration in the file
-  #  become: yes
-  #  command: puppet apply /tmp/manifest.pp
+- name: Execute the scritp manifest. Need configuration in the file
+  become: yes
+  command: puppet apply /tmp/manifest.pp
 
-- name: Create a folder on remote /storage/dteam/
+- name: Create a folder on remote /storm/webdav
   ansible.builtin.file:
     path: /etc/storm/webdav
     state: directory
@@ -222,7 +222,7 @@
     dest: /etc/storm/webdav/config/
     mode: 0640
 
-- name: Copy certificates to storm.
+- name: Copy certificates to storm folder.
   copy:
     src: /etc/grid-security/
     dest: /etc/grid-security/storm-webdav/
