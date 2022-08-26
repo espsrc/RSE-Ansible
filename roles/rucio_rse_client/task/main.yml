@@ -210,13 +210,13 @@
     group: storm
     mode: '0700'
 
-name: Transfer storm-webdav-test-sa.properties
+- name: Transfer storm-webdav-test-sa.properties
   ansible.builtin.copy:
     src: storm-webdav-test-sa.properties
     dest: /etc/storm/webdav/sa.d/
     mode: 0644
     
-name: Transfer application.yml 
+- name: Transfer application.yml 
   ansible.builtin.copy:
     src: application.yml 
     dest: /etc/storm/webdav/config/
@@ -224,6 +224,6 @@ name: Transfer application.yml
 
 - name: Copy certificates to storm.
   copy:
-  src: /etc/grid-security/
-  dest: /etc/grid-security/storm-webdav/
-  delegate_to: localhost
+    src: /etc/grid-security/
+    dest: /etc/grid-security/storm-webdav/
+    delegate_to: localhost
