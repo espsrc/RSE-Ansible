@@ -1,0 +1,81 @@
+---
+
+- name: Create a folder on remote /storage/dteam/
+  ansible.builtin.file:
+    path: /storage/dteam
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
+    #- name: Export path
+    #  become: yes
+    #  command: export PATH=${PATH}:/opt/puppet/bin
+
+- name: Execute the 1/8 puppet modules
+  #become: yes
+  #command: sh /tmp/puppet.modules.sh
+  #ansible.builtin.command: puppet module install puppet-epel
+  community.general.puppet:
+    tags:
+    - puppet-epel 
+      #ansible.builtin.command: sh /tmp/puppet.modules.sh
+  ignore_errors: yes
+
+- name: Execute the 2/8 puppet module
+  become: yes
+  community.general.puppet:
+    tags:
+    - cnafsd-umd4
+
+- name: Execute the 3/8 puppet module
+  become: yes
+  community.general.puppet:
+    tags:
+    - puppetlabs-ntp
+    
+- name: Execute the 4/8 puppet module
+  become: yes
+  community.general.puppet:
+    tags:
+    - puppet-fetchcrl 
+
+- name: Execute the 5/8 puppet module
+  become: yes
+  community.general.puppet:
+    tags:
+    - lcgdm-voms
+
+- name: Execute the script setup.pp
+  #become: yes
+  command: puppet apply /tmp/setup.pp
+
+- name: Execute the script manifest. Need configuration in the file
+  #become: yes
+  command: puppet apply /tmp/manifest.pp
+
+- name: Create a folder on remote /storm/webdav
+  ansible.builtin.file:
+    path: /etc/storm/webdav
+    state: directory
+    owner: root
+    group: storm
+    mode: '0700'
+
+- name: Transfer storm-webdav-test-sa.properties
+  ansible.builtin.copy:
+    src: storm-webdav-test-sa.properties
+    dest: /etc/storm/webdav/sa.d/
+    mode: 0644
+    
+- name: Transfer application.yml 
+  ansible.builtin.copy:
+    src: application.yml 
+    dest: /etc/storm/webdav/config/
+    mode: 0640
+
+- name: Copy certificates to storm folder.
+  copy:
+    src: /etc/grid-security/
+    dest: /etc/grid-security/storm-webdav/
+    delegate_to: localhost

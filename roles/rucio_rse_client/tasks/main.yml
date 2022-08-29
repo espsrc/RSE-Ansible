@@ -141,14 +141,15 @@
 - name: Install epel-release
   ansible.builtin.package:
     name: epel-release
-    state: present
+    state: latest
 
 - name: Install puppet 1/2
   #become: yes
   ansible.builtin.yum:
-          #name: https://yum.puppetlabs.com/puppet5/el/7/x86_64/puppet5-release-5.0.0-6.el7.noarch.rpm
+    name: https://yum.puppetlabs.com/puppet5/el/7/x86_64/puppet5-release-5.0.0-6.el7.noarch.rpm
           #name: http://linuxsoft.cern.ch/mirror/yum.puppetlabs.com/puppet5/el/7/x86_64/puppet5-release-5.0.0-9.el7.noarch.rpm
-    name: https://yum.puppetlabs.com/puppetlabs-release-el-7.noarch.rpm
+          #Not work
+          #name: https://yum.puppetlabs.com/puppetlabs-release-el-7.noarch.rpm
     state: present
 
 - name: Install Puppet 2/2

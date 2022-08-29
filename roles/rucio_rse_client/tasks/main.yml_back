@@ -1,0 +1,317 @@
+---
+
+#Esto funciona comentado solo pra pruebas
+- name: Install Packages
+  ansible.builtin.yum:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - acl
+    - attr
+    - openssl
+    - epel-release
+    - python-pip
+    - gcc
+    - libffi-devel
+    - python-devel
+    - redis
+    - dnf
+    - python2-cryptography.x86_64
+    state: present
+
+- name: Install NTP
+  ansible.builtin.package:
+    name: ntp
+    state: present
+
+- name: Enable ntpd
+  ansible.builtin.systemd:
+    name: ntpd
+    state: started
+    enabled: yes
+    #when: ansible_os_family == 'RedHat'
+    #ignore_errors: True
+
+- name: Install openssl
+  ansible.builtin.package:
+    name: openssl
+    state: present
+
+- name: Install with dnf
+  #become: yes
+  ansible.builtin.dnf:
+    name: 
+    #- makecache
+      - python-crypto  
+    state: latest
+
+- name: Create a folder on remote host
+  ansible.builtin.file:
+    path: /etc/grid-security/
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
+    # Funciona
+- name: Private key
+  community.crypto.openssl_privatekey:
+    path: /etc/grid-security/key.pem
+    size: 2048
+    mode: 0600
+    type: RSA
+
+    #- name: Ensure self-signed cert is present
+    #  community.crypto.x509_certificate:
+    #    path: /etc/grid-security/server.crt
+    #    privatekey_path: /etc/grid-security/key.pem
+    #    provider: selfsigned
+    #    selfsigned_not_after: "+3650d" # this is the default
+    #    mode: 0644
+
+
+    # No funciona
+    #- name: Ensure self-signed cert is present
+    #  community.crypto.x509_certificate:
+    #    path: /etc/grid-security/redis-server.crt
+    #    privatekey_path: /etc/grid-security/redis-server.key
+    #    provider: selfsigned
+    #    selfsigned_not_after: "+3650d" # this is the default
+    #    mode: 0644
+
+        #- name: Create Certificates
+        #  become: yes
+        #  command: openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -keyout key.pem -out cert.pem
+        #  register: out 
+        #- debug: var=out.stdout_lines
+
+- name: Generate an OpenSSL Certificate Signing Request with Subject information
+  community.crypto.openssl_csr:
+    path: /etc/grid-security/hostcert.csr
+    privatekey_path: /etc/grid-security/key.pem
+    country_name: SP
+    organization_name: SPSRC
+    email_address: jsanchez@iaa.es
+    common_name: RSE
+
+  #Comentado para probar el resto
+    #- name: Upgrade RHEL Family OS packages
+    #  yum:
+    #    name: '*'
+    #    state: latest
+    #  when: ansible_os_family == "RedHat"
+
+
+- name: Copy certificate hostfile
+  become: yes
+  command: cp cert.pem /etc/grid-security/hostcert.pem
+
+- name: Copy certificate file
+  become: yes
+  command: cp key.pem  /etc/grid-security/hostkey.pem
+
+    #NO Funciona, comentado solo para probar el resto
+    #- name: Upgrade pip
+    #  become: yes
+    #  yum:
+    #    name: 'python-pip'
+    #    state: latest
+    #  when: ansible_os_family == "RedHat"
+
+    #- name: Upgrade pip
+    #  become: yes
+    #  pip:
+    #    name: pip
+    #    extra_args: -U setuptools
+    #state: forcereinstall
+
+    #- name: Install cryptography 36.0.0
+    #  become: yes
+    #  ansible.builtin.pip:
+    #    name: cryptography
+    #    state: present    
+
+  # Certificados x509
+
+    #- name: Ensure private key is present
+    #  community.crypto.openssl_privatekey:
+    #    path: /etc/grid-security/host-key.key
+    #    size: 2048
+    #    mode: 0600
+    #    type: RSA
+
+    #No funciona falta libreria
+    #- name: Ensure self-signed cert is present
+    #  community.crypto.x509_certificate:
+    #    path: /etc/grid-security/host-cert.crt
+    #    privatekey_path: /etc/grid-security/host-key.key
+    #    provider: selfsigned
+    #    selfsigned_not_after: "+3650d" # this is the default
+    #    mode: 0600
+
+    #- name: Create simple self-signed certificate
+    #  community.crypto.x509_certificate:
+    #    path: /etc/grid-security/certificate.pem
+    #    privatekey_path: /etc/grid-security/certificate.key
+    #    provider: selfsigned
+
+    #- name: Change permissions
+    #  ansible.builtin.file:
+    #    path: /etc/grid-security/certificate.pem
+    #    owner: root
+    #    group: root
+    #    mode: '0644'
+
+    #- name: Change permissions
+    #  ansible.builtin.file:
+    #    path: /etc/grid-security/certificate.key
+    #    owner: root
+    #    group: root
+    #    mode: '0400'
+
+- name: Create a folder on remote host for temporal files
+  ansible.builtin.file:
+    path: /tmp
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: Import a key from a url
+  become: yes
+  ansible.builtin.rpm_key:
+    state: present
+    key: http://repository.egi.eu/sw/production/umd/UMD-RPM-PGP-KEY
+
+- name: Install remote rpm files on server (EPEL)
+  become: yes
+  ansible.builtin.yum:
+          #name: https://dl.fedoraproject.org/pub/epel/7/x86_64/Packages/e/epel-release-7-14.noarch.rpm
+    name: https://download-ib01.fedoraproject.org/pub/epel/7/aarch64/Packages/e/epel-release-7-12.noarch.rpm
+    state: present
+    
+    #Mejorado arriba, ya que descarga e instala en el mismo paso
+    #- name: Copy rpm files to server
+    #  ansible.builtin.copy:
+    #    src: https://dl.fedoraproject.org/pub/epel/7/x86_64/Packages/e/epel-release-7-12.noarch.rpm
+    #    dest: /tmp/epel-release-7-12.noarch.rpm
+
+- name: Install umd-release
+  become: yes
+  ansible.builtin.yum:
+    name: http://repository.egi.eu/sw/production/umd/4/centos7/x86_64/updates/umd-release-4.1.3-1.el7.centos.noarch.rpm
+    state: present
+
+    #Mejorado en el paso anterior, ya que descarga e instala
+    #- name: Install packages.
+    #  yum:
+    #     name: /tmp/epel-release-7-12.noarch.rpm
+    #     state: present
+
+    #- name: Install packages.
+    #  yum:
+    #     name: /tmp/umd-release-4.1.3-1.el7.centos.noarch.rpm
+    #     state: present
+
+- name: Add repo EGI
+  become: yes
+  ansible.builtin.yum_repository:
+    name: epel
+    description: EGI YUM repo 
+    baseurl: http://repository.egi.eu/sw/production/cas/1/current/repo-files/EGI-trustanchors.repo
+
+- name: Add repository Cloud Cnaf
+  become: yes
+  ansible.builtin.yum_repository:
+    name: epel
+    description: EPEL YUM repo Cloud Cnaf
+    baseurl: https://repo.cloud.cnaf.infn.it/repository/storm/storm-stable-centos7.repo
+
+    #Mejorada arriba, pendiente a prueba
+    #- name: Download EGI-trustanchors
+    #  ansible.builtin.get_url:
+    #    url: http://repository.egi.eu/sw/production/cas/1/current/repo-files/EGI-trustanchors.repo
+    #    dest: /etc/yum.repos.d/EGI-trustanchors.repo
+    #    mode: '0440'
+
+- name: Install ca-policy-egi-core, yum utils and epel
+  ansible.builtin.yum:
+    name:
+      - ca-policy-egi-core
+      - yum-utils
+      - epel-release
+    state: present
+
+- name: Download puppet5
+  become: yes
+  ansible.builtin.get_url:
+    url: https://yum.puppetlabs.com/puppet5/el/7/x86_64/puppet5-release-5.0.0-6.el7.noarch.rpm
+    dest: /tmp/puppet5-release-5.0.0-6.el7.noarch.rpm
+    mode: '0777'
+
+- name: install puppet from file
+  become: yes
+  yum:
+    name: /tmp/puppet5-release-5.0.0-6.el7.noarch.rpm
+    state: present
+
+    #- name: Install package puppet
+    #  become: yes
+    #  ansible.builtin.yum:
+    #    name: https://yum.puppetlabs.com/puppet5/el/7/x86_64/puppet5-release-5.0.0-6.el7.noarch.rpm
+    #    state: present
+
+    #Mejor opcion arriba, pendiente prueba
+    #- name: Install package puppet
+    #  become: yes
+    #  community.general.apt_rpm:
+    #    pkg: https://yum.puppetlabs.com/puppet5/el/7/x86_64/puppet5-release-5.0.0-6.el7.noarch.rpm
+    #    state: present
+
+    #Creo que no es necesario si funciona lo anterior
+- name: Install puppet-agent
+  become: yes
+  ansible.builtin.yum:
+    name:
+      - puppet-agent
+    state: present
+
+- name: reset ssh connection to allow user changes to affect 'current login user'
+  meta: reset_connection
+      
+- name: Transfer puppet.modules.sh
+  become: yes
+  ansible.builtin.copy:
+    src: puppet.modules.sh
+    dest: /tmp 
+    mode: 0777
+
+- name: Transfer setup.pp
+  ansible.builtin.copy:
+    src: setup.pp
+    dest: /tmp
+    mode: 0777
+
+- name: Transfer manifest.pp
+  ansible.builtin.copy:
+    src: manifest.pp
+    dest: /tmp
+    mode: 0777
+
+- name: Execute the script puppet.modules
+  become: yes
+  command: sh /tmp/puppet.modules.sh  
+
+- name: Execute the script setup.pp
+  become: yes
+  command: puppet apply /tmp/setup.pp
+
+- name: Execute the scritp manifest
+  become: yes
+  command: puppet apply /tmp/manifest.pp
+
+- name: Enable redis
+  ansible.builtin.systemd:
+    name: redis
+    state: started
+    enabled: yes

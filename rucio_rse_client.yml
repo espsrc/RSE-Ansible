@@ -5,3 +5,4 @@
       import_tasks: handlers/global_handlers.yml  
   roles:
     - rucio_rse_client
+    - puppet
