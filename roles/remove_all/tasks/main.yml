@@ -86,31 +86,15 @@
     name: epel-release
     state: absent
 
-- name: Remove puppet 1/2
-  #become: yes
-  ansible.builtin.yum:
-    name: https://yum.puppetlabs.com/puppet5/el/7/x86_64/puppet5-release-5.0.0-6.el7.noarch.rpm
-          #name: http://linuxsoft.cern.ch/mirror/yum.puppetlabs.com/puppet5/el/7/x86_64/puppet5-release-5.0.0-9.el7.noarch.rpm
-          #Not work
-          #name: https://yum.puppetlabs.com/puppetlabs-release-el-7.noarch.rpm
-    state: absent
-
-- name: Remove Puppet 2/2
+- name: Remove Puppet 
   become: yes
   ansible.builtin.package:
     name: puppet
     state: absent
 
-    # Not work
-    #- name: Add repository Storm
-    #  become: yes
-    #  ansible.builtin.yum_repository:
-    #    name: Storm-repo
-    #    description: Storm repo
-    #    #    baseurl: https://repo.cloud.cnaf.infn.it/repository/storm-rpm-stable/centos7/
-    #    baseurl: https://repo.cloud.cnaf.infn.it/repository/storm/storm-stable-centos7.repo
-    #    state: present
-
+- name: Remove puppet5-release
+  become: yes
+  command: yum remove -y puppet5-release
 
 - name: Remove redis
   ansible.builtin.yum:
