@@ -28,49 +28,49 @@
   ignore_errors: yes
 
 - name: Execute the 2/8 puppet module
-  become: yes
+  #become: yes
   community.general.puppet:
     tags:
     - cnafsd-umd4
   ignore_errors: yes
   
 - name: Execute the 3/8 puppet module
-  become: yes
+  #become: yes
   community.general.puppet:
     tags:
     - puppetlabs-ntp
   ignore_errors: yes
   
 - name: Execute the 4/8 puppet module
-  become: yes
+  #become: yes
   community.general.puppet:
     tags:
     - puppet-fetchcrl 
   ignore_errors: yes
   
 - name: Execute the 5/8 puppet module
-  become: yes
+  #become: yes
   community.general.puppet:
     tags:
     - lcgdm-voms
   ignore_errors: yes
 
 - name: Execute the 6/8 puppet module
-  become: yes
+  #become: yes
   community.general.puppet:
     tags:
     - cnafsd-bdii
   ignore_errors: yes
 
 - name: Execute the 7/8 puppet module
-  become: yes
+  #become: yes
   community.general.puppet:
     tags:
     - cnafsd-storm
   ignore_errors: yes
 
 - name: Execute the 8/8 puppet module
-  become: yes
+  #become: yes
   community.general.puppet:
     tags:
     - cnafsd-lcmaps
