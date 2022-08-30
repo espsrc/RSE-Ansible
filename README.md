@@ -125,7 +125,7 @@ Check the service logs here:
 ```
 tail /var/log/storm/webdav/storm-webdav-server.log
 ```
-## For remove 
+## To Remove 
 ```
 ansible-playbook -i inventories/list remove_all.yml
 ```

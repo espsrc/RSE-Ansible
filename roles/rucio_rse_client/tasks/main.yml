@@ -143,14 +143,23 @@
     name: epel-release
     state: latest
 
-- name: Install puppet 1/2
-  #become: yes
-  ansible.builtin.yum:
-          #name: https://yum.puppetlabs.com/puppet5/el/7/x86_64/puppet5-release-5.0.0-6.el7.noarch.rpm
-    name: http://linuxsoft.cern.ch/mirror/yum.puppetlabs.com/puppet5/el/7/x86_64/puppet5-release-5.0.0-9.el7.noarch.rpm
-    state: present
+- name: Remove previous version Puppet5
+  ansible.builtin.package:
+    name: puppet5-release
+    state: absent
 
-- name: Install Puppet 2/2
+- name: Install Puppet 5 
+  become: yes
+  command: rpm -Uvh https://yum.puppetlabs.com/puppet5/el/7/x86_64/puppet5-release-5.0.0-6.el7.noarch.rpm
+
+- name: Check repo
+  become: yes
+  ansible.builtin.copy:
+    src: puppet5.repo
+    dest: /etc/yum.repos.d/
+    mode: 0644
+
+- name: Install Puppet 
   become: yes
   ansible.builtin.package:
     name: puppet
@@ -188,9 +197,10 @@
     dest: /tmp
     mode: 0777
 
-- name: Reboot the machine (Wait for 1 min)
-  reboot:
-    reboot_timeout: 60
+    #- name: Reboot the machine (Wait for 1 min)
+    #  reboot:
+    #    reboot_timeout: 60
+
 
 - name: Install redis
   ansible.builtin.yum:
