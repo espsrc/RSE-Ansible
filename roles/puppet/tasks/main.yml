@@ -1,5 +1,10 @@
 ---
 
+- name: Script modules
+  become: yes
+  command: sh /tmp/puppet.modules.sh
+  ignore_errors: yes
+
 - name: Create a folder on remote /storage/dteam/
   ansible.builtin.file:
     path: /storage/dteam
@@ -49,6 +54,28 @@
     tags:
     - lcgdm-voms
   ignore_errors: yes
+
+- name: Execute the 6/8 puppet module
+  become: yes
+  community.general.puppet:
+    tags:
+    - cnafsd-bdii
+  ignore_errors: yes
+
+- name: Execute the 7/8 puppet module
+  become: yes
+  community.general.puppet:
+    tags:
+    - cnafsd-storm
+  ignore_errors: yes
+
+- name: Execute the 8/8 puppet module
+  become: yes
+  community.general.puppet:
+    tags:
+    - cnafsd-lcmaps
+  ignore_errors: yes
+ 
   
 - name: Execute the script setup.pp
   #become: yes

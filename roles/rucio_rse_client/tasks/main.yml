@@ -178,6 +178,10 @@
 - name: reset ssh connection
   meta: reset_connection
 
+- name: Export Path
+  command: export PATH=${PATH}:/opt/puppet/bin
+  ignore_errors: yes
+
 - name: Transfer puppet.modules.sh
   become: yes
   ansible.builtin.copy:
