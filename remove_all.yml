@@ -1,0 +1,7 @@
+- hosts: all
+  become: yes
+  handlers:
+    - name: Import global handlers
+      import_tasks: handlers/global_handlers.yml  
+  roles:
+    - remove_all

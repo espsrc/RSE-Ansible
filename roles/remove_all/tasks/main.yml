@@ -3,13 +3,13 @@
 - name: Create group "storm"
   ansible.builtin.group:
     name: storm
-    state: present
+    state: absent
 
 - name: Add the user 'storm'
   ansible.builtin.user:
     name: storm
     comment: Storm User
-    group: storm
+    group: absent
 
 - name: Install Common Packages
   ansible.builtin.yum:
@@ -26,64 +26,49 @@
     - dnf
     - python2-cryptography.x86_64
     - yum-utils
-    state: present
+    state: absent
 
 - name: Install NTP
   ansible.builtin.package:
     name: ntp
-    state: present
+    state: absent
 
 - name: Enable ntpd
   ansible.builtin.systemd:
     name: ntpd
-    state: started
+    state: absent
     enabled: yes
 
 - name: Install python-crypto with dnf
   ansible.builtin.dnf:
     name:
       - python-crypto
-    state: latest
+    state: absent
 
 - name: Create a folder for certificates
   ansible.builtin.file:
     path: /etc/grid-security/
-    state: directory
+    state: absent
     owner: root
     group: root
     mode: '0700'
 
   # Certificados x509
 
-- name: Create private key
-  community.crypto.openssl_privatekey:
-    path: /etc/grid-security/hostkey.pem
-    size: 2048
-    mode: 0400
-    type: RSA
-
-- name: Create public key
-  community.crypto.x509_certificate:
-    path: /etc/grid-security/hostcert.crt
-    privatekey_path: /etc/grid-security/hostkey.pem
-    provider: selfsigned
-    selfsigned_not_after: "+3650d"
-    #mode: 0600
-
-- name: Create self-signed certificate
-  community.crypto.x509_certificate:
-    path: /etc/grid-security/hostcert.pem
-    privatekey_path: /etc/grid-security/hostkey.pem
-    provider: selfsigned
-    mode: 0644
+- name: remove collected files
+      ansible.builtin.file:
+        path: /etc/grid-security/
+        state: absent
+      with_items:
+      - hostkey.pem
+      - hostcert.crt
+      - hostcert.pem
 
 - name: Create a folder on remote host for temporal files
   ansible.builtin.file:
     path: /tmp
-    state: directory
-    owner: root
-    group: root
-    mode: '0700'
+    state: absent
+
 
 - name: Import key from UMG
   become: yes
@@ -141,14 +126,15 @@
 - name: Install epel-release
   ansible.builtin.package:
     name: epel-release
-    state: present
+    state: latest
 
 - name: Install puppet 1/2
   #become: yes
   ansible.builtin.yum:
-          #name: https://yum.puppetlabs.com/puppet5/el/7/x86_64/puppet5-release-5.0.0-6.el7.noarch.rpm
+    name: https://yum.puppetlabs.com/puppet5/el/7/x86_64/puppet5-release-5.0.0-6.el7.noarch.rpm
           #name: http://linuxsoft.cern.ch/mirror/yum.puppetlabs.com/puppet5/el/7/x86_64/puppet5-release-5.0.0-9.el7.noarch.rpm
-    name: https://yum.puppetlabs.com/puppetlabs-release-el-7.noarch.rpm
+          #Not work
+          #name: https://yum.puppetlabs.com/puppetlabs-release-el-7.noarch.rpm
     state: present
 
 - name: Install Puppet 2/2
