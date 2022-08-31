@@ -1,9 +1,26 @@
 ---
 
-- name: Script modules
+- name: Transfer puppet.modules.sh
   become: yes
+  ansible.builtin.copy:
+    src: puppet.modules.sh
+    dest: /tmp
+    mode: 0777
+
+- name: Transfer setup.pp
+  ansible.builtin.copy:
+    src: setup.pp
+    dest: /tmp
+    mode: 0777
+
+- name: Transfer manifest.pp
+  ansible.builtin.copy:
+    src: manifest.pp
+    dest: /tmp
+    mode: 0777
+
+- name: Script modules
   command: sh /tmp/puppet.modules.sh
-  ignore_errors: yes
 
 - name: Create a folder on remote /storage/dteam/
   ansible.builtin.file:
@@ -25,6 +42,10 @@
     tags:
     - puppet-epel 
       #ansible.builtin.command: sh /tmp/puppet.modules.sh
+  ignore_errors: yes
+
+- name: test installation
+  command: puppet module install puppet-epel
   ignore_errors: yes
 
 - name: Execute the 2/8 puppet module
@@ -76,7 +97,18 @@
     - cnafsd-lcmaps
   ignore_errors: yes
  
-  
+  - name: Install redis
+  ansible.builtin.yum:
+    name:
+      - redis
+    state: present
+
+- name: Enable redis
+  ansible.builtin.systemd:
+    name: redis
+    state: started
+    enabled: yes
+
 - name: Execute the script setup.pp
   #become: yes
   command: puppet apply /tmp/setup.pp
