@@ -11,6 +11,10 @@
     comment: Storm User
     group: storm
 
+- name: Set a hostname
+  ansible.builtin.hostname:
+    name: spsrc.local
+
 - name: Install Common Packages
   ansible.builtin.yum:
     name: "{{ packages }}"
