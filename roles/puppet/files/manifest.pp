@@ -1,4 +1,4 @@
-$host='spsrc.local'
+$host='spsrc_1.local'
 
 include storm::db
 

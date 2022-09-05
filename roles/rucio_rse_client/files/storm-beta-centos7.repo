@@ -1,0 +1,7 @@
+[storm-beta-centos7]
+name=storm-beta-centos7
+baseurl=https://repo.cloud.cnaf.infn.it/repository/storm-rpm-beta/centos7/
+enabled=0
+gpgcheck=0
+protect=1
+priority=1

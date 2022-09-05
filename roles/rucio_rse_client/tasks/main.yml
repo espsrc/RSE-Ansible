@@ -13,7 +13,7 @@
 
 - name: Set a hostname
   ansible.builtin.hostname:
-    name: spsrc.local
+    name: spsrc_1.local
 
 - name: Install Common Packages
   ansible.builtin.yum:
@@ -55,9 +55,9 @@
     state: directory
     owner: root
     group: root
-    mode: '0700'
-
-  # Certificados x509
+    mode: '0754'
+   
+    #Certificados x509
 
 - name: Create private key
   community.crypto.openssl_privatekey:
@@ -147,6 +147,11 @@
     name: epel-release
     state: latest
 
+- name: Install storm-webdav
+  ansible.builtin.package:
+    name: storm-webdav
+    state: present
+
 - name: Remove previous version Puppet5
   ansible.builtin.package:
     name: puppet5-release
@@ -156,28 +161,39 @@
   become: yes
   command: rpm -Uvh https://yum.puppetlabs.com/puppet5/el/7/x86_64/puppet5-release-5.0.0-6.el7.noarch.rpm
 
-- name: Check repo
+- name: Check repo puppet
   become: yes
   ansible.builtin.copy:
     src: puppet5.repo
     dest: /etc/yum.repos.d/
     mode: 0644
 
-- name: Install Puppet 
+- name: Copy Storm stable repo
   become: yes
+  ansible.builtin.copy:
+    src: storm-stable-centos7.repo
+    dest: /etc/yum.repos.d/
+    mode: 0644
+
+- name: Copy Storm beta repo
+  become: yes
+  ansible.builtin.copy:
+    src: storm-beta-centos7.repo
+    dest: /etc/yum.repos.d/
+    mode: 0644
+
+- name: Copy Storm nightly repo
+  become: yes
+  ansible.builtin.copy:
+    src: storm-nightly-centos7.repo
+    dest: /etc/yum.repos.d/
+    mode: 0644
+
+- name: Install Puppet 
+  #become: yes
   ansible.builtin.package:
     name: puppet
     state: present
-
-    # Not work
-    #- name: Add repository Storm
-    #  become: yes
-    #  ansible.builtin.yum_repository:
-    #    name: Storm-repo
-    #    description: Storm repo
-    #    #    baseurl: https://repo.cloud.cnaf.infn.it/repository/storm-rpm-stable/centos7/
-    #    baseurl: https://repo.cloud.cnaf.infn.it/repository/storm/storm-stable-centos7.repo
-    #    state: present
 
 - name: reset ssh connection
   meta: reset_connection
@@ -186,11 +202,7 @@
   command: export PATH=${PATH}:/opt/puppet/bin
   ignore_errors: yes
 
-
-    #- name: Reboot the machine (Wait for 1 min)
-    #  reboot:
-    #    reboot_timeout: 60
-
-
-
+- name: Reboot the machine (Wait for 1 min)
+  reboot:
+    reboot_timeout: 60
 

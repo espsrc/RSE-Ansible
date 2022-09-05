@@ -19,8 +19,9 @@
     dest: /tmp
     mode: 0777
 
-- name: Script modules
-  command: sh /tmp/puppet.modules.sh
+    #- name: Script modules
+    #  command: sh /tmp/puppet.modules.sh
+    #  ignore_errors: yes
 
 - name: Create a folder on remote /storage/dteam/
   ansible.builtin.file:
@@ -36,16 +37,14 @@
 
 - name: Execute the 1/8 puppet modules
   #become: yes
-  #command: sh /tmp/puppet.modules.sh
   #ansible.builtin.command: puppet module install puppet-epel
   community.general.puppet:
     tags:
     - puppet-epel 
-      #ansible.builtin.command: sh /tmp/puppet.modules.sh
   ignore_errors: yes
 
 - name: test installation
-  command: puppet module install puppet-epel
+  command: puppet module install cnafsd-umd4
   ignore_errors: yes
 
 - name: Execute the 2/8 puppet module
@@ -97,7 +96,7 @@
     - cnafsd-lcmaps
   ignore_errors: yes
  
-  - name: Install redis
+- name: Install redis
   ansible.builtin.yum:
     name:
       - redis
