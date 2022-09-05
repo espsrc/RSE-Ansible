@@ -111,11 +111,13 @@
 - name: Execute the script setup.pp
   #become: yes
   command: puppet apply /tmp/setup.pp
+  ignore_errors: yes
 
 - name: Execute the script manifest. Need configuration in the file
   #become: yes
   command: puppet apply /tmp/manifest.pp
-
+  ignore_errors: yes
+  
 - name: Create a folder on remote /storm/webdav
   ansible.builtin.file:
     path: /etc/storm/webdav
@@ -123,21 +125,25 @@
     owner: root
     group: storm
     mode: '0700'
-
+  ignore_errors: yes
+  
 - name: Transfer storm-webdav-test-sa.properties
   ansible.builtin.copy:
     src: storm-webdav-test-sa.properties
     dest: /etc/storm/webdav/sa.d/
     mode: 0644
-    
+  ignore_errors: yes  
+
 - name: Transfer application.yml 
   ansible.builtin.copy:
     src: application.yml 
     dest: /etc/storm/webdav/config/
     mode: 0640
+  ignore_errors: yes
 
 - name: Copy certificates to storm folder.
   copy:
     src: /etc/grid-security/
     dest: /etc/grid-security/storm-webdav/
     delegate_to: localhost
+  ignore_errors: yes
