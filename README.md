@@ -130,5 +130,5 @@ tail /var/log/storm/webdav/storm-webdav-server.log
 ansible-playbook -i inventories/list remove_all.yml
 ```
 
-## TO Do
+## TO DO
 Convert the puppet part to ansible
