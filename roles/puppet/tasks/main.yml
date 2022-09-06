@@ -142,8 +142,6 @@
   ignore_errors: yes
 
 - name: Copy certificates to storm folder.
-  copy:
-    src: /etc/grid-security/
-    dest: /etc/grid-security/storm-webdav/
-    delegate_to: localhost
+  become: yes
+  command: cp /etc/grid-security/*.* /etc/grid-security/storm-webdav/
   ignore_errors: yes
