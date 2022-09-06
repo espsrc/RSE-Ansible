@@ -101,4 +101,13 @@
     name:
       - redis
     state: absent
-
+ 
+- name: Remove Storm repos
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /etc/yum.repos.d/puppet5.repo
+    - /etc/yum.repos.d/storm-stable-centos7.repo
+    - /etc/yum.repos.d/storm-nightly-centos7.repo
+    - /etc/yum.repos.d/storm-beta-centos7.repo
