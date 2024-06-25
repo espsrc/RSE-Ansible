@@ -40,7 +40,7 @@ spring:
             provider: escape
             client-name: <redacted>
             client-id: <client-id>
-            client-secret: FxdN9qCNEftCEtpx45Dr6_QyX2w8cUXYGWrWwspG-0iX81KEAcC1lnoaQw-bL-BhIOA2gEEVRPURnm27XLVqPA
+            client-secret: <REDACTED>
             scope:
               - openid
               - profile
